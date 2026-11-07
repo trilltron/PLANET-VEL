@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           if [ "${{ runner.os }}" = "Linux" ]; then cmake --build build --config Release --parallel;
-          else cmake --build build --config Release --target PlanetVel_VST3 --parallel; fi
+          else cmake --build build --config Release --target PlanetVel_VST3 PlanetVel_Standalone --parallel; fi
       - name: Headless tests (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -41,6 +41,11 @@ jobs:
           mkdir -p pkg
           cp "build/PlanetVel_artefacts/Release/VST3/Planet Vel.vst3/Contents/x86_64-win/Planet Vel.vst3" "pkg/Planet Vel.dll"
           grep -aq VSTPluginMain "pkg/Planet Vel.dll" || { echo 'VSTPluginMain export missing'; exit 1; }
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'Windows'
+        with:
+          name: PlanetVel-Windows-App
+          path: build/PlanetVel_artefacts/Release/Standalone/Planet Vel.exe
       - uses: actions/upload-artifact@v4
         if: runner.os == 'Windows'
         with:
