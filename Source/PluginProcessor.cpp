@@ -3,6 +3,60 @@
  #define WIN32_LEAN_AND_MEAN
  #include <windows.h>
 #endif
+#ifdef _WIN32
+ #include <cstdio>
+ #include <cstdint>
+namespace pvearly
+{
+// Raw Win32 only (no JUCE, no CRT streams): works from the first instruction the module runs, even if JUCE itself is what crashes.
+static void appendFile (const char* name, const char* text)
+{
+    char path[MAX_PATH] = {};
+    const DWORD n = GetTempPathA (MAX_PATH, path); if (n == 0 || n > MAX_PATH - 40) return;
+    lstrcatA (path, name);
+    HANDLE h = CreateFileA (path, FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (h == INVALID_HANDLE_VALUE) return;
+    DWORD w = 0; WriteFile (h, text, (DWORD) lstrlenA (text), &w, nullptr); CloseHandle (h);
+}
+void trace (const char* msg)
+{
+    SYSTEMTIME t; GetLocalTime (&t); char line[512];
+    std::snprintf (line, sizeof (line), "%02d:%02d:%02d.%03d pid=%lu  %s\r\n", t.wHour, t.wMinute, t.wSecond, t.wMilliseconds, (unsigned long) GetCurrentProcessId(), msg);
+    appendFile ("PlanetVel-trace.txt", line);
+}
+static void describe (const void* addr, char* out, size_t cap)
+{
+    HMODULE mod = nullptr; char p[MAX_PATH] = "?";
+    if (GetModuleHandleExA (GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR) addr, &mod) && mod != nullptr)
+    { GetModuleFileNameA (mod, p, MAX_PATH); std::snprintf (out, cap, "%s +0x%llX", p, (unsigned long long) ((uintptr_t) addr - (uintptr_t) mod)); }
+    else std::snprintf (out, cap, "unknown module @%p", addr);
+}
+void writeCrash (EXCEPTION_POINTERS* ep)
+{
+    char line[1024], d[900];
+    if (ep != nullptr && ep->ExceptionRecord != nullptr)
+    {
+        describe (ep->ExceptionRecord->ExceptionAddress, d, sizeof (d));
+        std::snprintf (line, sizeof (line), "CRASH code=0x%08lX at %s\r\n", (unsigned long) ep->ExceptionRecord->ExceptionCode, d); appendFile ("PlanetVel-crash.txt", line);
+        if (ep->ExceptionRecord->ExceptionCode == 0xC0000005 && ep->ExceptionRecord->NumberParameters >= 2)
+        { std::snprintf (line, sizeof (line), "  access violation: %s of address 0x%llX\r\n", ep->ExceptionRecord->ExceptionInformation[0] == 0 ? "READ" : ep->ExceptionRecord->ExceptionInformation[0] == 1 ? "WRITE" : "EXECUTE", (unsigned long long) ep->ExceptionRecord->ExceptionInformation[1]); appendFile ("PlanetVel-crash.txt", line); }
+    }
+    void* frames[40]; const USHORT nf = CaptureStackBackTrace (0, 40, frames, nullptr);
+    for (USHORT i = 0; i < nf; ++i) { describe (frames[i], d, sizeof (d)); std::snprintf (line, sizeof (line), "  #%02d %s\r\n", (int) i, d); appendFile ("PlanetVel-crash.txt", line); }
+    std::snprintf (line, sizeof (line), "  cpu: sse4.2=%d avx=%d avx2=%d  (1 = present)\r\n", (int) IsProcessorFeaturePresent (38), (int) IsProcessorFeaturePresent (39), (int) IsProcessorFeaturePresent (40)); appendFile ("PlanetVel-crash.txt", line);
+}
+static LONG WINAPI filter (EXCEPTION_POINTERS* ep)
+{
+    static volatile LONG busy = 0; if (InterlockedExchange (&busy, 1) == 0) writeCrash (ep);
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+static const int installed = (SetUnhandledExceptionFilter (&filter), trace ("module loaded (static init)"), 0);
+}
+ #define PV_TRACE(msg) pvearly::trace (msg)
+#else
+ #define PV_TRACE(msg) ((void) 0)
+#endif
+
 #include "PluginProcessor.h"
 #include "UI/PluginEditor.h"
 
@@ -47,6 +101,9 @@ static void pvCrashHandler (void* platformInfo)
    #endif
     s << "\n" << juce::SystemStats::getStackBacktrace();
     pvLog (s);
+   #ifdef _WIN32
+    pvearly::writeCrash (static_cast<EXCEPTION_POINTERS*> (platformInfo));
+   #endif
 }
 
 juce::AudioProcessor::BusesProperties PlanetVelProcessor::makeBuses()
@@ -59,8 +116,9 @@ juce::AudioProcessor::BusesProperties PlanetVelProcessor::makeBuses()
 
 PlanetVelProcessor::PlanetVelProcessor()
     : juce::AudioProcessor (makeBuses()),
-      apvts (*this, nullptr, "PLANETVEL", createLayout())
+      apvts (*this, nullptr, "PLANETVEL", (PV_TRACE ("creating parameter layout"), createLayout()))
 {
+    PV_TRACE ("PlanetVelProcessor ctor body start");
     juce::SystemStats::setApplicationCrashHandler (&pvCrashHandler);   // writes module/offset/stack of any crash to planetvel.log
     pvLog ("processor ctor start");
     for (int i = 0; i < NUM_PARAMS; ++i)
@@ -74,7 +132,7 @@ PlanetVelProcessor::PlanetVelProcessor()
     for (auto& s : arpSteps) s.store (ArpStep().pack());
     for (auto& m : layerMeter) m.store (0.0f);
     meta = Preset::makeInit();
-    pvLog ("processor ctor done");
+    pvLog ("processor ctor done"); PV_TRACE ("PlanetVelProcessor ctor done");
 }
 
 PlanetVelProcessor::~PlanetVelProcessor() { cancelPendingUpdate(); }
@@ -89,6 +147,7 @@ bool PlanetVelProcessor::isBusesLayoutSupported (const BusesLayout& l) const
 
 void PlanetVelProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    PV_TRACE ("prepareToPlay start");
     pvLog ("prepareToPlay sr=" + juce::String (sampleRate) + " block=" + juce::String (samplesPerBlock));
     Library::get().ensureStarted();           // one-time ~230 ms table build (not in the constructor: keeps plugin scans instant)
     sr = sampleRate; maxBlock = juce::jmax (samplesPerBlock, 16);
@@ -98,7 +157,7 @@ void PlanetVelProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     arpOut.ensureSize (16384); chunkMidi.ensureSize (16384);
     lfo1.rng = Rng (11); lfo2.rng = Rng (23); lfo1.nxt = lfo1.rng.bi(); lfo2.nxt = lfo2.rng.bi();
     setLatencySamples (0);
-    pvLog ("prepareToPlay done");
+    pvLog ("prepareToPlay done"); PV_TRACE ("prepareToPlay done");
 }
 
 // ------------------------------------------------------------------------------------------- params
@@ -465,9 +524,9 @@ void PlanetVelProcessor::setStateInformation (const void* data, int size)
     sendChangeMessage();
 }
 
-juce::AudioProcessorEditor* PlanetVelProcessor::createEditor() { pvLog ("createEditor"); auto* e = new PlanetVelEditor (*this); pvLog ("editor created"); return e; }
+juce::AudioProcessorEditor* PlanetVelProcessor::createEditor() { PV_TRACE ("createEditor"); pvLog ("createEditor"); auto* e = new PlanetVelEditor (*this); pvLog ("editor created"); PV_TRACE ("editor created"); return e; }
 } // namespace PV
 
-juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new PV::PlanetVelProcessor(); }
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { PV_TRACE ("createPluginFilter called"); return new PV::PlanetVelProcessor(); }
 
 #include "Vst2Wrapper.inl"
