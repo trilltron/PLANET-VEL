@@ -55,6 +55,14 @@ jobs:
           mkdir -p pkg
           cp "build/PlanetVel_artefacts/Release/VST3/Planet Vel.vst3/Contents/x86_64-win/Planet Vel.vst3" "pkg/Planet Vel.dll"
           grep -aq VSTPluginMain "pkg/Planet Vel.dll" || { echo 'VSTPluginMain export missing'; exit 1; }
+      - name: GATE - binaries must not depend on the system C++ runtime (static /MT)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          for f in "build/PlanetVel_artefacts/Release/Standalone/Planet Vel.exe" "build/PlanetVel_artefacts/Release/VST3/Planet Vel.vst3/Contents/x86_64-win/Planet Vel.vst3"; do
+            if grep -aq "MSVCP140.dll" "$f" || grep -aq "VCRUNTIME140.dll" "$f"; then echo "DYNAMIC RUNTIME still linked in: $f"; exit 1; fi
+            echo "static runtime OK: $f"
+          done
       - name: Build test harness (Windows)
         if: runner.os == 'Windows'
         continue-on-error: true
@@ -139,6 +147,13 @@ jobs:
       - name: Build (Win32 VST3 / VST2 dll + standalone)
         shell: bash
         run: cmake --build build32 --config Release --target PlanetVel_VST3 PlanetVel_Standalone --parallel
+      - name: GATE - binaries must not depend on the system C++ runtime (static /MT)
+        shell: bash
+        run: |
+          for f in "build32/PlanetVel_artefacts/Release/Standalone/Planet Vel.exe" "build32/PlanetVel_artefacts/Release/VST3/Planet Vel.vst3/Contents/x86-win/Planet Vel.vst3"; do
+            if grep -aq "MSVCP140.dll" "$f" || grep -aq "VCRUNTIME140.dll" "$f"; then echo "DYNAMIC RUNTIME still linked in: $f"; exit 1; fi
+            echo "static runtime OK: $f"
+          done
       - name: Build test harness (Win32)
         shell: bash
         run: cmake --build build32 --config Release --target PlanetVelTests --parallel

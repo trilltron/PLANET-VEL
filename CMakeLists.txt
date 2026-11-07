@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 3.22)
 
 # ---- platform baselines (FL Studio 20 -> 2025 compatibility) -------------------------------
-if(APPLE)
+if(CMAKE_HOST_APPLE)   # (APPLE/MSVC are only defined after project(), so test the host here)
   # macOS 10.13 High Sierra+, universal (Intel slice is what FL 20 uses, even on Apple Silicon)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum macOS" FORCE)
   set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Universal binary" FORCE)
 endif()
-if(MSVC)
-  # Static MSVC runtime (/MT): no VC++ redistributable needed on the user's machine
-  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "" FORCE)
-endif()
+# Static MSVC runtime (/MT): no VC++ redistributable needed on the user's machine. Ignored by non-MSVC compilers.
+# (Must NOT be wrapped in if(MSVC): that variable does not exist before project(). An older VC++ runtime on the user's PC
+#  crashed the dynamic-runtime build inside MSVCP140.dll at startup.)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "" FORCE)
 
 project(PlanetVel VERSION 1.0.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
