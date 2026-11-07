@@ -26,7 +26,6 @@ PlanetVelProcessor::PlanetVelProcessor()
     for (auto& s : arpSteps) s.store (ArpStep().pack());
     for (auto& m : layerMeter) m.store (0.0f);
     meta = Preset::makeInit();
-    Library::get().ensureStarted();           // background build; never blocks the scanner / constructor
 }
 
 PlanetVelProcessor::~PlanetVelProcessor() { cancelPendingUpdate(); }
@@ -41,6 +40,7 @@ bool PlanetVelProcessor::isBusesLayoutSupported (const BusesLayout& l) const
 
 void PlanetVelProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    Library::get().ensureStarted();           // one-time ~230 ms table build (not in the constructor: keeps plugin scans instant)
     sr = sampleRate; maxBlock = juce::jmax (samplesPerBlock, 16);
     synth.prepare (sr); fx.prepare (sr, kChunk); arp.prepare (sr);
     for (int l = 0; l < kLayers; ++l) { layL[(size_t) l].assign ((size_t) kChunk + kSubBlock, 0.0f); layR[(size_t) l].assign ((size_t) kChunk + kSubBlock, 0.0f); }

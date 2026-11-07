@@ -5,7 +5,7 @@
 
 namespace PV
 {
-class Library : private juce::Thread
+class Library
 {
 public:
     static constexpr int kTableSize = 2048;
@@ -17,7 +17,8 @@ public:
     static constexpr double kSourceRate = 44100.0;
 
     static Library& get();
-    /** Starts the background build (idempotent, never blocks). */
+    /** Builds the tables once (~230 ms, synchronous, idempotent). Called from prepareToPlay - never from the constructor, so plugin
+        scanners stay instant. No thread is used: a background thread alive at DLL unload can deadlock on Windows. */
     void ensureStarted();
     bool isReady() const noexcept { return ready.load (std::memory_order_acquire); }
     void waitUntilReady();
@@ -34,15 +35,14 @@ public:
     bool loadUserSample (const juce::File& f);
 
 private:
-    Library() : juce::Thread ("PlanetVel library") {}
-    void run() override;
+    Library() = default;
     void buildWavetables();
     void buildSources();
 
     std::vector<float> wt;
     std::array<Buf, kSources> sources;
     std::atomic<bool> ready { false };
-    std::atomic<bool> started { false };
+    juce::CriticalSection buildLock;
     std::atomic<const Buf*> userPtr { nullptr };
     std::vector<std::unique_ptr<Buf>> userKeep;       // retired buffers kept alive for a few loads
     juce::CriticalSection userLock;

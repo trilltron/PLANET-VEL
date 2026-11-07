@@ -8,17 +8,14 @@ Library& Library::get() { static Library l; return l; }
 
 void Library::ensureStarted()
 {
-    bool expected = false;
-    if (started.compare_exchange_strong (expected, true)) startThread (juce::Thread::Priority::low);
-}
-void Library::waitUntilReady() { ensureStarted(); while (! isReady()) juce::Thread::sleep (5); }
-
-void Library::run()
-{
+    if (isReady()) return;
+    const juce::ScopedLock sl (buildLock);
+    if (isReady()) return;
     buildWavetables();
     buildSources();
     ready.store (true, std::memory_order_release);
 }
+void Library::waitUntilReady() { ensureStarted(); }
 
 // ---------------------------------------------------------------------------------- wavetables
 namespace

@@ -185,7 +185,7 @@ static int cmdVst3 (const juce::File& bundle)
             auto layout = inst->getBusesLayout();
             for (int b = 1; b < inst->getBusCount (false); ++b) layout.outputBuses.set (b, juce::AudioChannelSet::stereo());
             CHECK (inst->setBusesLayout (layout), "all 4 aux outputs enable");
-            inst->prepareToPlay (48000.0, 512); juce::Thread::sleep (600);      // plugin builds its library lazily on a background thread
+            inst->prepareToPlay (48000.0, 512);
             juce::AudioBuffer<float> buf (10, 512); float peak = 0;
             inst->setCurrentProgram (0);
             for (int blk = 0; blk < 60; ++blk)
