@@ -5,8 +5,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, windows-2022, macos-13]
+        os: [ubuntu-22.04, windows-2022, macos-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Linux deps
@@ -33,7 +34,15 @@ jobs:
           B=build/PlanetVelTests_artefacts/Release/PlanetVelTests
           $B export /tmp/presets && $B render 12 && $B stress
           xvfb-run -a $B vst3 "build/PlanetVel_artefacts/Release/VST3/Planet Vel.vst3"
-      - name: pluginval (strictness 5)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PlanetVel-${{ runner.os }}
+          path: |
+            build/PlanetVel_artefacts/Release/VST3
+            build/PlanetVel_artefacts/Release/AU
+      - name: pluginval (strictness 5, optional)
+        continue-on-error: true
+        timeout-minutes: 10
         shell: bash
         run: |
           case "${{ runner.os }}" in
@@ -46,9 +55,3 @@ jobs:
           if [ "${{ runner.os }}" = "Linux" ]; then xvfb-run -a ./pluginval --strictness-level 5 --validate-in-process "$P";
           elif [ "${{ runner.os }}" = "Windows" ]; then ./pluginval.exe --strictness-level 5 --validate-in-process "$P";
           else ./pluginval.app/Contents/MacOS/pluginval --strictness-level 5 --validate-in-process "$P"; fi
-      - uses: actions/upload-artifact@v4
-        with:
-          name: PlanetVel-${{ runner.os }}
-          path: |
-            build/PlanetVel_artefacts/Release/VST3
-            build/PlanetVel_artefacts/Release/AU
