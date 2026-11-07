@@ -16,7 +16,7 @@ jobs:
         shell: bash
         run: |
           if [ "${{ runner.os }}" = "Windows" ]; then
-            cmake -S . -B build -A x64 -DPV_BUILD_TESTS=OFF "-DCMAKE_CXX_FLAGS=/MP /EHsc" "-DCMAKE_C_FLAGS=/MP"
+            cmake -S . -B build -A x64 -DPV_BUILD_TESTS=OFF "-DCMAKE_CXX_FLAGS=-MP -EHsc" "-DCMAKE_C_FLAGS=-MP"
           elif [ "${{ runner.os }}" = "macOS" ]; then
             cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPV_BUILD_TESTS=OFF
           else
