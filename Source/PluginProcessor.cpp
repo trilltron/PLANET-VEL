@@ -1,3 +1,8 @@
+#ifdef _WIN32
+ #define NOMINMAX
+ #define WIN32_LEAN_AND_MEAN
+ #include <windows.h>
+#endif
 #include "PluginProcessor.h"
 #include "UI/PluginEditor.h"
 
@@ -16,6 +21,34 @@ void pvLog (const juce::String& m)
     if (logger) logger->logMessage (juce::Time::getCurrentTime().toString (true, true, true, true) + "  " + m);
 }
 
+static void pvCrashHandler (void* platformInfo)
+{
+    juce::String s = "CRASH! ";
+   #if JUCE_WINDOWS
+    if (platformInfo != nullptr)
+    {
+        auto* ep = static_cast<EXCEPTION_POINTERS*> (platformInfo);
+        if (ep->ExceptionRecord != nullptr)
+        {
+            const void* addr = ep->ExceptionRecord->ExceptionAddress;
+            s << "code=0x" << juce::String::toHexString ((juce::int64) ep->ExceptionRecord->ExceptionCode) << " address=" << juce::String::toHexString ((juce::pointer_sized_int) addr);
+            HMODULE mod = nullptr; char path[MAX_PATH] = {};
+            if (GetModuleHandleExA (GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR) addr, &mod) && mod != nullptr)
+            {
+                GetModuleFileNameA (mod, path, MAX_PATH);
+                s << " module=" << path << " offset=0x" << juce::String::toHexString ((juce::pointer_sized_int) addr - (juce::pointer_sized_int) mod);
+            }
+            if (ep->ExceptionRecord->ExceptionCode == 0xC0000005 && ep->ExceptionRecord->NumberParameters >= 2)
+                s << " (" << (ep->ExceptionRecord->ExceptionInformation[0] == 0 ? "read" : ep->ExceptionRecord->ExceptionInformation[0] == 1 ? "write" : "exec") << " of 0x" << juce::String::toHexString ((juce::pointer_sized_int) ep->ExceptionRecord->ExceptionInformation[1]) << ")";
+        }
+    }
+   #else
+    juce::ignoreUnused (platformInfo);
+   #endif
+    s << "\n" << juce::SystemStats::getStackBacktrace();
+    pvLog (s);
+}
+
 juce::AudioProcessor::BusesProperties PlanetVelProcessor::makeBuses()
 {
     auto b = BusesProperties().withOutput ("Main", juce::AudioChannelSet::stereo(), true);
@@ -28,6 +61,7 @@ PlanetVelProcessor::PlanetVelProcessor()
     : juce::AudioProcessor (makeBuses()),
       apvts (*this, nullptr, "PLANETVEL", createLayout())
 {
+    juce::SystemStats::setApplicationCrashHandler (&pvCrashHandler);   // writes module/offset/stack of any crash to planetvel.log
     pvLog ("processor ctor start");
     for (int i = 0; i < NUM_PARAMS; ++i)
     {
@@ -114,6 +148,7 @@ void PlanetVelProcessor::buildLayerParams (const float* s, LayerParams (&out)[kL
 void PlanetVelProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
     juce::ScopedNoDenormals nd;
+    { static std::atomic<bool> first { true }; if (first.exchange (false)) pvLog ("first processBlock: samples=" + juce::String (buffer.getNumSamples()) + " channels=" + juce::String (buffer.getNumChannels()) + " buses=" + juce::String (getBusCount (false))); }
     const auto t0 = juce::Time::getHighResolutionTicks();
     const int total = buffer.getNumSamples();
     buffer.clear();
