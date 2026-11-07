@@ -13,9 +13,20 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libfreetype-dev libfontconfig1-dev libgl1-mesa-dev xvfb
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-      - name: Build
-        run: cmake --build build --config Release --parallel
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cmake -S . -B build -A x64 -DPV_BUILD_TESTS=OFF "-DCMAKE_CXX_FLAGS=/MP /EHsc" "-DCMAKE_C_FLAGS=/MP"
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPV_BUILD_TESTS=OFF
+          else
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          fi
+      - name: Build (VST3 only on Windows/macOS)
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then cmake --build build --config Release --parallel;
+          else cmake --build build --config Release --target PlanetVel_VST3 --parallel; fi
       - name: Headless tests (Linux)
         if: runner.os == 'Linux'
         run: |
