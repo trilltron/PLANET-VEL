@@ -1,3 +1,7 @@
+#ifdef _WIN32
+ #define NOMINMAX
+ #define WIN32_LEAN_AND_MEAN
+#endif
 // Headless DSP / preset test harness for PLANET VEL (no audio device, no GUI).
 //   PlanetVelTests export <dir>            write all factory presets as .pvpreset + round-trip check
 //   PlanetVelTests render [step] [wavDir]  render every Nth preset, check for NaN/Inf/silence/clipping, measure CPU
@@ -5,6 +9,9 @@
 #include "PluginProcessor.h"
 #include "UI/PluginEditor.h"
 #include "Vst2.h"
+#if JUCE_WINDOWS
+ #include <windows.h>
+#endif
 #include <set>
 
 using namespace PV;
@@ -240,6 +247,46 @@ static int cmdVst2()
     return failures;
 }
 
+// Loads an actual plugin binary (the .dll FL would load) and drives it like a VST2 host, including opening the editor in a real
+// Win32 host window. Prints a trace line per step (flushed) so a crash shows exactly where it happened.
+#define STEP(msg) do { std::printf ("[vst2dll] %s\n", msg); std::fflush (stdout); } while (0)
+static int cmdVst2Dll (const juce::File& dllFile)
+{
+    using namespace pvvst2;
+    STEP ("loading binary");
+    juce::DynamicLibrary lib; if (! lib.open (dllFile.getFullPathName())) { std::printf ("could not open %s\n", dllFile.getFullPathName().toRawUTF8()); return 1; }
+    auto entry = (pvvst2::AEffect* (*) (pvvst2::HostCb)) lib.getFunction ("VSTPluginMain");
+    if (entry == nullptr) { STEP ("FAIL: VSTPluginMain export not found"); return 1; }
+    STEP ("VSTPluginMain found; calling it");
+    pvvst2::AEffect* fx = entry (&fakeHost); if (fx == nullptr) { STEP ("FAIL: entry returned null"); return 1; }
+    std::printf ("[vst2dll] AEffect ok: params=%d programs=%d outs=%d flags=%d\n", fx->numParams, fx->numPrograms, fx->numOutputs, fx->flags); std::fflush (stdout);
+    STEP ("effOpen"); fx->dispatcher (fx, 0, 0, 0, nullptr, 0);
+    STEP ("effSetSampleRate/BlockSize"); fx->dispatcher (fx, 10, 0, 0, nullptr, 44100.0f); fx->dispatcher (fx, 11, 0, 512, nullptr, 0);
+    STEP ("effMainsChanged(on)"); fx->dispatcher (fx, 12, 0, 1, nullptr, 0);
+    STEP ("effGetEffectName"); char nm[64] = {}; fx->dispatcher (fx, 45, 0, 0, nm, 0); std::printf ("[vst2dll] name='%s'\n", nm); std::fflush (stdout);
+    STEP ("effEditGetRect"); pvvst2::ERect* rc = nullptr; fx->dispatcher (fx, 13, 0, 0, &rc, 0);
+    if (rc) { std::printf ("[vst2dll] rect %dx%d\n", rc->right - rc->left, rc->bottom - rc->top); std::fflush (stdout); }
+    STEP ("process 20 blocks with a note");
+    VstMidiEvent me {}; me.type = 1; me.byteSize = sizeof (me); me.midiData[0] = (char) 0x90; me.midiData[1] = 60; me.midiData[2] = 100;
+    VstEvents evs {}; evs.numEvents = 1; evs.events[0] = reinterpret_cast<VstEvent*> (&me); fx->dispatcher (fx, 25, 0, 0, &evs, 0);
+    std::vector<float> l (512), r (512); float* out[2] = { l.data(), r.data() }; for (int b = 0; b < 20; ++b) fx->processReplacing (fx, nullptr, out, 512);
+   #if JUCE_WINDOWS
+    STEP ("creating host window (HWND)");
+    HWND host = CreateWindowExA (0, "STATIC", "vst2 host", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 1700, 1100, nullptr, nullptr, GetModuleHandle (nullptr), nullptr);
+    std::printf ("[vst2dll] HWND=%p\n", (void*) host); std::fflush (stdout);
+    STEP ("effEditOpen"); const auto ok = fx->dispatcher (fx, 14, 0, 0, host, 0); std::printf ("[vst2dll] effEditOpen returned %d\n", (int) ok); std::fflush (stdout);
+    STEP ("pumping messages for 4 s (editor paints)");
+    const auto end = GetTickCount64() + 4000; MSG msg;
+    while (GetTickCount64() < end) { while (PeekMessage (&msg, nullptr, 0, 0, PM_REMOVE)) { TranslateMessage (&msg); DispatchMessage (&msg); } Sleep (5); }
+    STEP ("effEditClose"); fx->dispatcher (fx, 15, 0, 0, nullptr, 0);
+    if (host) DestroyWindow (host);
+   #endif
+    STEP ("effMainsChanged(off)"); fx->dispatcher (fx, 12, 0, 0, nullptr, 0);
+    STEP ("effClose"); fx->dispatcher (fx, 1, 0, 0, nullptr, 0);
+    STEP ("DONE - all steps completed without crashing");
+    return 0;
+}
+
 static int cmdStress()
 {
     Library::get().waitUntilReady();
@@ -317,6 +364,7 @@ int main (int argc, char** argv)
     else if (cmd == "render") rc = cmdRender (argc > 2 ? juce::jmax (1, std::atoi (argv[2])) : 10, argc > 3 ? juce::File (argv[3]) : juce::File());
     else if (cmd == "stress") rc = cmdStress();
     else if (cmd == "vst2") rc = cmdVst2();
+    else if (cmd == "vst2dll") rc = cmdVst2Dll (juce::File (argc > 2 ? argv[2] : "Planet Vel.dll"));
     else if (cmd == "libtime") { const auto t0 = juce::Time::getMillisecondCounterHiRes(); Library::get().waitUntilReady(); std::printf ("library (wavetables + granular sources) ready after %.0f ms\n", juce::Time::getMillisecondCounterHiRes() - t0); }
     else if (cmd == "vst3") rc = cmdVst3 (juce::File (argc > 2 ? argv[2] : "Planet Vel.vst3"));
     else if (cmd == "snapshot") rc = cmdSnapshot (juce::File (argc > 2 ? argv[2] : "ui.png"), argc > 3 ? std::atoi (argv[3]) : 0, argc > 4 ? std::atoi (argv[4]) : 0, argc > 5 ? std::atoi (argv[5]) : 100);

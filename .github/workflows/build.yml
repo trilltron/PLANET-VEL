@@ -19,7 +19,7 @@ jobs:
         shell: bash
         run: |
           if [ "${{ runner.os }}" = "Windows" ]; then
-            cmake -S . -B build -A x64 -DPV_BUILD_TESTS=OFF "-DCMAKE_CXX_FLAGS=-MP -EHsc" "-DCMAKE_C_FLAGS=-MP"
+            cmake -S . -B build -A x64 -DPV_BUILD_TESTS=ON "-DCMAKE_CXX_FLAGS=-MP -EHsc" "-DCMAKE_C_FLAGS=-MP"
           elif [ "${{ runner.os }}" = "macOS" ]; then
             cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPV_BUILD_TESTS=OFF
           else
@@ -55,6 +55,20 @@ jobs:
           mkdir -p pkg
           cp "build/PlanetVel_artefacts/Release/VST3/Planet Vel.vst3/Contents/x86_64-win/Planet Vel.vst3" "pkg/Planet Vel.dll"
           grep -aq VSTPluginMain "pkg/Planet Vel.dll" || { echo 'VSTPluginMain export missing'; exit 1; }
+      - name: Build test harness (Windows)
+        if: runner.os == 'Windows'
+        continue-on-error: true
+        shell: bash
+        run: cmake --build build --config Release --target PlanetVelTests --parallel
+      - name: Load the real VST2 .dll like FL does and open its editor (Windows)
+        if: runner.os == 'Windows'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $t = Get-ChildItem -Recurse build -Filter PlanetVelTests.exe | Select-Object -First 1
+          if (-not $t) { Write-Host 'harness exe not found'; exit 0 }
+          & $t.FullName vst2dll "$PWD\pkg\Planet Vel.dll"
+          Write-Host "harness exit code: $LASTEXITCODE (0x$('{0:X}' -f $LASTEXITCODE))"
       - name: Build Windows installer (Inno Setup)
         if: runner.os == 'Windows'
         shell: pwsh
