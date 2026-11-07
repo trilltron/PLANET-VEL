@@ -359,7 +359,7 @@ void PlanetVelProcessor::loadGlobalSettings()
     if (auto xml = juce::XmlDocument::parse (globalFile()))
     {
         favorites.addTokens (xml->getStringAttribute ("favorites"), "|", ""); favorites.removeEmptyStrings();
-        if (editorWidth == 1600 && xml->hasAttribute ("w")) { editorWidth = xml->getIntAttribute ("w", 1600); editorHeight = xml->getIntAttribute ("h", 1000); }
+        if (editorWidth == 1280 && xml->hasAttribute ("w")) { editorWidth = xml->getIntAttribute ("w", 1280); editorHeight = xml->getIntAttribute ("h", 800); }
         settings.libraryPath = xml->getStringAttribute ("library");
     }
 }
@@ -421,7 +421,7 @@ void PlanetVelProcessor::setStateInformation (const void* data, int size)
         settings.quality = st->getIntAttribute ("quality", 1); settings.polyphony = st->getIntAttribute ("poly", 24); settings.pitchBendRange = st->getIntAttribute ("pb", 2);
         settings.theme = st->getIntAttribute ("theme", 0); settings.animation = st->getBoolAttribute ("anim", true); settings.mpe = st->getBoolAttribute ("mpe", false);
         settings.libraryPath = st->getStringAttribute ("library");
-        editorWidth = st->getIntAttribute ("w", 1600); editorHeight = st->getIntAttribute ("h", 1000); uiScalePercent = st->getIntAttribute ("scale", 100);
+        editorWidth = st->getIntAttribute ("w", 1280); editorHeight = st->getIntAttribute ("h", 800); uiScalePercent = st->getIntAttribute ("scale", 100);
         const auto sample = st->getStringAttribute ("sample"); if (sample.isNotEmpty() && juce::File (sample).existsAsFile()) loadUserSample (juce::File (sample));
         const auto tun = st->getStringAttribute ("tuning"); if (tun.isNotEmpty() && juce::File (tun).existsAsFile()) loadTuning (juce::File (tun));
     }

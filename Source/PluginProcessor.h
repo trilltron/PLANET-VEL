@@ -89,7 +89,7 @@ public:
     bool loadUserSample (const juce::File& f);
     bool loadTuning (const juce::File& f);
     void resetTuning() { tuning.reset(); settings.tuningFile = {}; }
-    int  editorWidth = 1600, editorHeight = 1000;               // persisted per instance
+    int  editorWidth = 1280, editorHeight = 800;               // persisted per instance
     int  uiScalePercent = 100;
 
     // ---- meters (read by the UI)
