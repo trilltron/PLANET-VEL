@@ -41,6 +41,19 @@ jobs:
           mkdir -p pkg
           cp "build/PlanetVel_artefacts/Release/VST3/Planet Vel.vst3/Contents/x86_64-win/Planet Vel.vst3" "pkg/Planet Vel.dll"
           grep -aq VSTPluginMain "pkg/Planet Vel.dll" || { echo 'VSTPluginMain export missing'; exit 1; }
+      - name: Build Windows installer (Inno Setup)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress; }
+          & $iscc "/DRepo=$PWD" "/DDll=$PWD\pkg\Planet Vel.dll" "/DVst3=$PWD\build\PlanetVel_artefacts\Release\VST3\Planet Vel.vst3" "/DApp=$PWD\build\PlanetVel_artefacts\Release\Standalone\Planet Vel.exe" Installer\windows\PlanetVel.iss
+          if (-not (Test-Path pkg\PlanetVel-Setup.exe)) { throw "installer not produced" }
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'Windows'
+        with:
+          name: PlanetVel-Windows-Installer
+          path: pkg/PlanetVel-Setup.exe
       - uses: actions/upload-artifact@v4
         if: runner.os == 'Windows'
         with:
