@@ -6,6 +6,9 @@
 
 namespace PV
 {
+/** Largest 16:10 editor width (<= wanted) that fits the primary display's usable area, so the window never opens off-screen. */
+int fitEditorWidth (int wanted);
+
 class PVKeyboard : public juce::MidiKeyboardComponent
 {
 public:

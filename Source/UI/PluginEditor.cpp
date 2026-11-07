@@ -6,6 +6,18 @@ using juce::Rectangle; using juce::Colour; using juce::Point;
 
 static Rectangle<int> R (float x, float y, float w, float h) { return Rectangle<float> (x * 0.8f, y * 0.8f, w * 0.8f, h * 0.8f).toNearestInt(); }   // reference-screenshot (2000x1250) -> base (1600x1000)
 
+int fitEditorWidth (int wanted)
+{
+    int w = juce::jlimit (960, 3840, wanted);
+    if (auto* d = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay())
+    {
+        const auto a = d->userArea;
+        const int maxW = juce::jmin ((int) (a.getWidth() * 0.92), (int) (a.getHeight() * 0.86 * 1.6));
+        if (maxW >= 640) w = juce::jmin (w, maxW);
+    }
+    return juce::jmax (640, w);
+}
+
 // ================================================================================================== keyboard
 void PVKeyboard::drawWhiteNote (int note, juce::Graphics& g, Rectangle<float> a, bool down, bool over, Colour line, Colour text)
 {
@@ -224,9 +236,9 @@ PlanetVelEditor::PlanetVelEditor (PlanetVelProcessor& p) : juce::AudioProcessorE
     setThemeIndex (proc.settings.theme.load()); laf.applyTheme(); setLookAndFeel (&laf);
     content = std::make_unique<Content> (*this); addAndMakeVisible (*content);
 
-    constrainer.setFixedAspectRatio ((double) kBaseW / (double) kBaseH); constrainer.setSizeLimits (960, 600, 3840, 2400);
+    constrainer.setFixedAspectRatio ((double) kBaseW / (double) kBaseH); constrainer.setSizeLimits (640, 400, 3840, 2400);
     setConstrainer (&constrainer); setResizable (true, true);
-    int w = juce::jlimit (960, 3840, proc.editorWidth), h = juce::roundToInt ((double) w * kBaseH / kBaseW);
+    int w = fitEditorWidth (proc.editorWidth), h = juce::roundToInt ((double) w * kBaseH / kBaseW);
     setSize (w, h);
 
     proc.addChangeListener (this);
@@ -289,7 +301,7 @@ void PlanetVelEditor::changeListenerCallback (juce::ChangeBroadcaster*)
     // preset / state change: refresh theme, matrix, size
     if (themeIndexRef() != proc.settings.theme.load()) { setThemeIndex (proc.settings.theme.load()); applyTheme(); }
     content->combi.refresh(); content->global.sync();
-    const int w = juce::jlimit (960, 3840, proc.editorWidth);
+    const int w = fitEditorWidth (proc.editorWidth);
     if (w != getWidth() && proc.editorWidth != 0) { restoring = true; setSize (w, juce::roundToInt ((double) w * kBaseH / kBaseW)); restoring = false; }
     content->repaint();
 }

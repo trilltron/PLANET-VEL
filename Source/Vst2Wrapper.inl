@@ -3,6 +3,7 @@
 // as VST3 (GetPluginFactory) AND as VST2 (VSTPluginMain), so the VST3 build can simply be copied out as "Planet Vel.dll" for FL Studio 20.0-20.6.
 // The VST2 GUI is Windows-only; on other platforms only the headless parts exist (used by the automated test).
 #include "Vst2.h"
+#include "UI/PluginEditor.h"
 #if !JUCE_MAC
 namespace pvvst2
 {
@@ -104,7 +105,7 @@ private:
                 return 0;
             case effEditGetRect:
             {
-                const int w = juce::jlimit (960, 3840, p->proc->editorWidth);
+                const int w = PV::fitEditorWidth (p->proc->editorWidth);
                 p->rect = { 0, 0, (int16_t) (w * 10 / 16), (int16_t) w }; *(ERect**) ptr = &p->rect; return 1;
             }
            #if JUCE_WINDOWS
