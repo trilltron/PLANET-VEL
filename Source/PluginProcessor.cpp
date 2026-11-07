@@ -3,6 +3,19 @@
 
 namespace PV
 {
+void pvLog (const juce::String& m)
+{
+    static std::unique_ptr<juce::FileLogger> logger = []
+    {
+        auto dir = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory).getChildFile ("Trill Tron").getChildFile ("Planet Vel");
+        dir.createDirectory();
+        auto f = dir.getChildFile ("planetvel.log");
+        if (f.getSize() > 200000) f.deleteFile();
+        return std::make_unique<juce::FileLogger> (f, "Planet Vel log", 0);
+    }();
+    if (logger) logger->logMessage (juce::Time::getCurrentTime().toString (true, true, true, true) + "  " + m);
+}
+
 juce::AudioProcessor::BusesProperties PlanetVelProcessor::makeBuses()
 {
     auto b = BusesProperties().withOutput ("Main", juce::AudioChannelSet::stereo(), true);
@@ -15,6 +28,7 @@ PlanetVelProcessor::PlanetVelProcessor()
     : juce::AudioProcessor (makeBuses()),
       apvts (*this, nullptr, "PLANETVEL", createLayout())
 {
+    pvLog ("processor ctor start");
     for (int i = 0; i < NUM_PARAMS; ++i)
     {
         const auto& d = defs()[(size_t) i];
@@ -26,6 +40,7 @@ PlanetVelProcessor::PlanetVelProcessor()
     for (auto& s : arpSteps) s.store (ArpStep().pack());
     for (auto& m : layerMeter) m.store (0.0f);
     meta = Preset::makeInit();
+    pvLog ("processor ctor done");
 }
 
 PlanetVelProcessor::~PlanetVelProcessor() { cancelPendingUpdate(); }
@@ -40,6 +55,7 @@ bool PlanetVelProcessor::isBusesLayoutSupported (const BusesLayout& l) const
 
 void PlanetVelProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    pvLog ("prepareToPlay sr=" + juce::String (sampleRate) + " block=" + juce::String (samplesPerBlock));
     Library::get().ensureStarted();           // one-time ~230 ms table build (not in the constructor: keeps plugin scans instant)
     sr = sampleRate; maxBlock = juce::jmax (samplesPerBlock, 16);
     synth.prepare (sr); fx.prepare (sr, kChunk); arp.prepare (sr);
@@ -48,6 +64,7 @@ void PlanetVelProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     arpOut.ensureSize (16384); chunkMidi.ensureSize (16384);
     lfo1.rng = Rng (11); lfo2.rng = Rng (23); lfo1.nxt = lfo1.rng.bi(); lfo2.nxt = lfo2.rng.bi();
     setLatencySamples (0);
+    pvLog ("prepareToPlay done");
 }
 
 // ------------------------------------------------------------------------------------------- params
@@ -413,7 +430,7 @@ void PlanetVelProcessor::setStateInformation (const void* data, int size)
     sendChangeMessage();
 }
 
-juce::AudioProcessorEditor* PlanetVelProcessor::createEditor() { return new PlanetVelEditor (*this); }
+juce::AudioProcessorEditor* PlanetVelProcessor::createEditor() { pvLog ("createEditor"); auto* e = new PlanetVelEditor (*this); pvLog ("editor created"); return e; }
 } // namespace PV
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new PV::PlanetVelProcessor(); }

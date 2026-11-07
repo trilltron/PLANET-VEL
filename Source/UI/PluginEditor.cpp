@@ -219,6 +219,7 @@ void PlanetVelEditor::Content::paint (juce::Graphics& g)
 // ================================================================================================== editor
 PlanetVelEditor::PlanetVelEditor (PlanetVelProcessor& p) : juce::AudioProcessorEditor (p), proc (p)
 {
+    pvLog ("editor ctor: start");
     proc.loadGlobalSettings();
     setThemeIndex (proc.settings.theme.load()); laf.applyTheme(); setLookAndFeel (&laf);
     content = std::make_unique<Content> (*this); addAndMakeVisible (*content);
@@ -231,6 +232,7 @@ PlanetVelEditor::PlanetVelEditor (PlanetVelProcessor& p) : juce::AudioProcessorE
     proc.addChangeListener (this);
     selectLayer (0); setPage (0); content->global.sync();
     startTimerHz (30);
+    pvLog ("editor ctor: done");
 }
 PlanetVelEditor::~PlanetVelEditor()
 {
@@ -238,7 +240,16 @@ PlanetVelEditor::~PlanetVelEditor()
     proc.editorWidth = getWidth(); proc.editorHeight = getHeight(); proc.saveGlobalSettings();
     setLookAndFeel (nullptr);
 }
-void PlanetVelEditor::paint (juce::Graphics& g) { g.fillAll (juce::Colours::black); }
+void PlanetVelEditor::parentHierarchyChanged()
+{
+    // JUCE 8 on Windows defaults to Direct2D, which can crash or show nothing on some GPUs/drivers/hosts: use the software renderer.
+    if (auto* peer = getPeer())
+    {
+        peer->setCurrentRenderingEngine (0);
+        pvLog ("window attached; software renderer selected");
+    }
+}
+void PlanetVelEditor::paint (juce::Graphics& g) { static bool logged = false; if (! logged) { logged = true; pvLog ("first paint"); } g.fillAll (juce::Colours::black); }
 void PlanetVelEditor::resized()
 {
     // The UI is laid out once in a fixed 1600x1000 coordinate space and scaled with an AffineTransform,

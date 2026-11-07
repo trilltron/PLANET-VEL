@@ -8,6 +8,9 @@
 
 namespace PV
 {
+/** Startup diagnostics -> %APPDATA%/Trill Tron/Planet Vel/planetvel.log (user application data folder on other OSes). */
+void pvLog (const juce::String& message);
+
 struct Settings
 {
     std::atomic<int>  quality { 1 };          // 0 ECO / 1 NORMAL / 2 HQ
