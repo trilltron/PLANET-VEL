@@ -1,0 +1,8 @@
+build/
+build-*/
+third_party/JUCE/
+*.user
+.vs/
+.DS_Store
+dist/
+Resources/Demos/

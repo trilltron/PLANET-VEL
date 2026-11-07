@@ -1,0 +1,43 @@
+name: build
+on: [push, pull_request]
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-13]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux deps
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libfreetype-dev libfontconfig1-dev libgl1-mesa-dev xvfb
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: Headless tests (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          B=build/PlanetVelTests_artefacts/Release/PlanetVelTests
+          $B export /tmp/presets && $B render 12 && $B stress
+          xvfb-run -a $B vst3 "build/PlanetVel_artefacts/Release/VST3/Planet Vel.vst3"
+      - name: pluginval (strictness 5)
+        shell: bash
+        run: |
+          case "${{ runner.os }}" in
+            Linux)   U=pluginval_Linux.zip ;;
+            Windows) U=pluginval_Windows.zip ;;
+            macOS)   U=pluginval_macOS.zip ;;
+          esac
+          curl -sSL -o pv.zip "https://github.com/Tracktion/pluginval/releases/latest/download/$U" && unzip -q pv.zip
+          P=$(find build -name "Planet Vel.vst3" -maxdepth 5 | head -1)
+          if [ "${{ runner.os }}" = "Linux" ]; then xvfb-run -a ./pluginval --strictness-level 5 --validate-in-process "$P";
+          elif [ "${{ runner.os }}" = "Windows" ]; then ./pluginval.exe --strictness-level 5 --validate-in-process "$P";
+          else ./pluginval.app/Contents/MacOS/pluginval --strictness-level 5 --validate-in-process "$P"; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PlanetVel-${{ runner.os }}
+          path: |
+            build/PlanetVel_artefacts/Release/VST3
+            build/PlanetVel_artefacts/Release/AU

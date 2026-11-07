@@ -1,0 +1,568 @@
+{
+  "format": "PLANETVEL",
+  "version": 1,
+  "name": "Red Bloom",
+  "category": "Pads",
+  "author": "Trill Tron",
+  "tags": "pad ambient evolving",
+  "params": {
+    "master": 0.75,
+    "orbitX": 0.5,
+    "orbitY": 0.5,
+    "orbitMode": 0.0,
+    "orbitRate": 0.246953785419464,
+    "orbitRadius": 0.46021169424057,
+    "macro1": 0.388634651899338,
+    "macro2": 0.186984732747078,
+    "macro3": 0.07809591293335,
+    "macro4": 0.294057577848434,
+    "macro5": 0.310858935117722,
+    "macro6": 0.207274943590164,
+    "macro7": 0.029517889022827,
+    "macro8": 0.0,
+    "mfOn": 0.0,
+    "mfType": 0.0,
+    "mfFreq": 0.809770107269287,
+    "mfRes": 0.200000002980232,
+    "dlyOn": 1.0,
+    "dlySync": 1.0,
+    "dlyDiv": 0.214285716414452,
+    "dlyTime": 0.54253888130188,
+    "dlyFb": 0.574878513813019,
+    "dlyMix": 0.131366804242134,
+    "revOn": 1.0,
+    "revType": 1.0,
+    "revSize": 0.768075108528137,
+    "revWet": 0.425963461399078,
+    "glOn": 1.0,
+    "glType": 0.0,
+    "glRate": 0.357142865657806,
+    "glMix": 0.0,
+    "glProb": 0.349999994039536,
+    "outLimit": 1.0,
+    "outMono": 0.0,
+    "outVol": 0.355796366930008,
+    "arpOn": 0.0,
+    "arpPat": 0.0,
+    "arpRate": 0.28571429848671,
+    "arpOct": 0.0,
+    "arpGate": 0.578947365283966,
+    "lfo1Rate": 0.374874860048294,
+    "lfo1Shape": 0.0,
+    "lfo2Rate": 0.45970606803894,
+    "lfo2Shape": 0.200000002980232,
+    "choMix": 0.16175951063633,
+    "choRate": 0.464964926242828,
+    "choDepth": 0.5,
+    "drive": 0.0,
+    "width": 0.5,
+    "eqLo": 0.5,
+    "eqMid": 0.5,
+    "eqHi": 0.570797264575958,
+    "a_engine": 0.25,
+    "a_mute": 0.0,
+    "a_solo": 0.0,
+    "a_level": 0.800000011920929,
+    "a_pan": 0.5,
+    "a_tune": 0.5,
+    "a_start": 0.0,
+    "a_cutoff": 0.757179260253906,
+    "a_reso": 0.115482300519943,
+    "a_ftype": 0.0,
+    "a_drive": 0.0,
+    "a_keytrk": 0.449999988079071,
+    "a_fenv": 0.560595095157623,
+    "a_lfo": 0.167879015207291,
+    "a_atk": 0.687345504760742,
+    "a_dec": 0.627010345458984,
+    "a_sus": 0.850000023841858,
+    "a_rel": 0.65899133682251,
+    "a_spread": 0.678793668746948,
+    "a_send": 0.5,
+    "a_keylo": 0.0,
+    "a_keyhi": 1.0,
+    "a_uni": 0.400000005960464,
+    "a_detune": 0.197917371988297,
+    "a_type": 0.0,
+    "a_p1": 0.595039427280426,
+    "a_p2": 0.010185301303864,
+    "a_p3": 0.450000017881393,
+    "a_p4": 0.5,
+    "a_p5": 0.5,
+    "a_p6": 0.5,
+    "b_engine": 0.0,
+    "b_mute": 0.0,
+    "b_solo": 0.0,
+    "b_level": 0.449999988079071,
+    "b_pan": 0.370174467563629,
+    "b_tune": 0.5,
+    "b_start": 0.0,
+    "b_cutoff": 0.502659857273102,
+    "b_reso": 0.119999997317791,
+    "b_ftype": 0.0,
+    "b_drive": 0.0,
+    "b_keytrk": 0.400000005960464,
+    "b_fenv": 0.5,
+    "b_lfo": 0.0,
+    "b_atk": 0.633285284042358,
+    "b_dec": 0.567326486110687,
+    "b_sus": 0.899999976158142,
+    "b_rel": 0.792749762535095,
+    "b_spread": 0.5,
+    "b_send": 0.5,
+    "b_keylo": 0.0,
+    "b_keyhi": 1.0,
+    "b_uni": 0.133333340287209,
+    "b_detune": 0.25,
+    "b_type": 0.714285731315613,
+    "b_p1": 0.445569664239883,
+    "b_p2": 0.5,
+    "b_p3": 0.5,
+    "b_p4": 0.289301753044128,
+    "b_p5": 0.5,
+    "b_p6": 0.5,
+    "c_engine": 0.5,
+    "c_mute": 0.0,
+    "c_solo": 0.0,
+    "c_level": 0.334551721811295,
+    "c_pan": 0.5,
+    "c_tune": 0.5,
+    "c_start": 0.683218717575073,
+    "c_cutoff": 0.782938599586487,
+    "c_reso": 0.100000001490116,
+    "c_ftype": 0.0,
+    "c_drive": 0.0,
+    "c_keytrk": 0.300000011920929,
+    "c_fenv": 0.5,
+    "c_lfo": 0.0,
+    "c_atk": 0.823090255260468,
+    "c_dec": 0.567326486110687,
+    "c_sus": 1.0,
+    "c_rel": 0.824634730815887,
+    "c_spread": 0.5,
+    "c_send": 0.5,
+    "c_keylo": 0.0,
+    "c_keyhi": 1.0,
+    "c_uni": 0.133333340287209,
+    "c_detune": 0.25,
+    "c_type": 0.142857149243355,
+    "c_p1": 0.468045383691788,
+    "c_p2": 0.439145714044571,
+    "c_p3": 0.208154603838921,
+    "c_p4": 0.074872598052025,
+    "c_p5": 0.222014725208282,
+    "c_p6": 0.481680601835251,
+    "d_engine": 0.0,
+    "d_mute": 1.0,
+    "d_solo": 0.0,
+    "d_level": 0.800000011920929,
+    "d_pan": 0.5,
+    "d_tune": 0.5,
+    "d_start": 0.0,
+    "d_cutoff": 0.889056384563446,
+    "d_reso": 0.100000001490116,
+    "d_ftype": 0.0,
+    "d_drive": 0.0,
+    "d_keytrk": 0.300000011920929,
+    "d_fenv": 0.5,
+    "d_lfo": 0.0,
+    "d_atk": 0.447792530059814,
+    "d_dec": 0.536895275115967,
+    "d_sus": 0.800000011920929,
+    "d_rel": 0.58716881275177,
+    "d_spread": 0.5,
+    "d_send": 0.5,
+    "d_keylo": 0.0,
+    "d_keyhi": 1.0,
+    "d_uni": 0.133333340287209,
+    "d_detune": 0.25,
+    "d_type": 0.0,
+    "d_p1": 0.5,
+    "d_p2": 0.5,
+    "d_p3": 0.5,
+    "d_p4": 0.5,
+    "d_p5": 0.5,
+    "d_p6": 0.5
+  },
+  "macroNames": [
+    "TIDE",
+    "MORPH",
+    "SPACE",
+    "GRIT",
+    "WARP",
+    "AIR",
+    "DRIFT",
+    "GLITCH"
+  ],
+  "modMatrix": [
+    {
+      "src": "M1 Tide",
+      "dest": "a_cutoff",
+      "amount": 0.300000011920929
+    },
+    {
+      "src": "M1 Tide",
+      "dest": "b_cutoff",
+      "amount": 0.300000011920929
+    },
+    {
+      "src": "M1 Tide",
+      "dest": "orbitX",
+      "amount": 0.349999994039536
+    },
+    {
+      "src": "M2 Morph",
+      "dest": "a_p1",
+      "amount": 0.400000005960464
+    },
+    {
+      "src": "M2 Morph",
+      "dest": "b_p1",
+      "amount": 0.400000005960464
+    },
+    {
+      "src": "M2 Morph",
+      "dest": "c_start",
+      "amount": 0.400000005960464
+    },
+    {
+      "src": "M2 Morph",
+      "dest": "orbitY",
+      "amount": 0.300000011920929
+    },
+    {
+      "src": "M3 Space",
+      "dest": "revWet",
+      "amount": 0.349999994039536
+    },
+    {
+      "src": "M3 Space",
+      "dest": "dlyMix",
+      "amount": 0.25
+    },
+    {
+      "src": "M3 Space",
+      "dest": "revSize",
+      "amount": 0.200000002980232
+    },
+    {
+      "src": "M4 Grit",
+      "dest": "drive",
+      "amount": 0.550000011920929
+    },
+    {
+      "src": "M4 Grit",
+      "dest": "a_drive",
+      "amount": 0.400000005960464
+    },
+    {
+      "src": "M5 Warp",
+      "dest": "a_p2",
+      "amount": 0.449999988079071
+    },
+    {
+      "src": "M5 Warp",
+      "dest": "b_p4",
+      "amount": 0.449999988079071
+    },
+    {
+      "src": "M5 Warp",
+      "dest": "c_p4",
+      "amount": 0.449999988079071
+    },
+    {
+      "src": "M6 Air",
+      "dest": "a_cutoff",
+      "amount": 0.25
+    },
+    {
+      "src": "M6 Air",
+      "dest": "b_cutoff",
+      "amount": 0.25
+    },
+    {
+      "src": "M6 Air",
+      "dest": "c_cutoff",
+      "amount": 0.25
+    },
+    {
+      "src": "M6 Air",
+      "dest": "eqHi",
+      "amount": 0.449999988079071
+    },
+    {
+      "src": "M7 Drift",
+      "dest": "a_detune",
+      "amount": 0.400000005960464
+    },
+    {
+      "src": "M7 Drift",
+      "dest": "a_spread",
+      "amount": 0.25
+    },
+    {
+      "src": "M7 Drift",
+      "dest": "b_detune",
+      "amount": 0.400000005960464
+    },
+    {
+      "src": "M7 Drift",
+      "dest": "b_spread",
+      "amount": 0.25
+    },
+    {
+      "src": "M7 Drift",
+      "dest": "choMix",
+      "amount": 0.349999994039536
+    },
+    {
+      "src": "M8 Glitch",
+      "dest": "glMix",
+      "amount": 0.800000011920929
+    },
+    {
+      "src": "M8 Glitch",
+      "dest": "glProb",
+      "amount": 0.5
+    },
+    {
+      "src": "Mod Wheel",
+      "dest": "a_cutoff",
+      "amount": 0.400000005960464
+    },
+    {
+      "src": "Mod Wheel",
+      "dest": "b_cutoff",
+      "amount": 0.400000005960464
+    }
+  ],
+  "arp": {
+    "length": 16,
+    "steps": [
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      },
+      {
+        "on": true,
+        "vel": 100,
+        "pitch": 0,
+        "ratchet": 1,
+        "prob": 100
+      }
+    ]
+  }
+}
