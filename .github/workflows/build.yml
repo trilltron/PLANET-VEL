@@ -1,5 +1,7 @@
 name: build
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: write
 jobs:
   build:
     strategy:
@@ -61,6 +63,19 @@ jobs:
           if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress; }
           & $iscc "/DRepo=$PWD" "/DDll=$PWD\pkg\Planet Vel.dll" "/DVst3=$PWD\build\PlanetVel_artefacts\Release\VST3\Planet Vel.vst3" "/DApp=$PWD\build\PlanetVel_artefacts\Release\Standalone\Planet Vel.exe" Installer\windows\PlanetVel.iss
           if (-not (Test-Path pkg\PlanetVel-Setup.exe)) { throw "installer not produced" }
+      - name: Zip and publish a public release (Windows)
+        if: runner.os == 'Windows' && github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p rel
+          7z a rel/PlanetVel-Windows-Installer.zip ./pkg/PlanetVel-Setup.exe
+          7z a rel/PlanetVel-Windows-VST2-dll.zip "./pkg/Planet Vel.dll"
+          7z a rel/PlanetVel-Windows-VST3.zip "./build/PlanetVel_artefacts/Release/VST3/Planet Vel.vst3"
+          7z a rel/PlanetVel-Windows-App.zip "./build/PlanetVel_artefacts/Release/Standalone/Planet Vel.exe"
+          gh release view latest >/dev/null 2>&1 || gh release create latest --title "PLANET VEL latest build" --notes "Automatic build of the main branch. Download a zip, unzip it, run the installer (or copy the plugin)." --target "$GITHUB_SHA"
+          gh release upload latest rel/*.zip --clobber
       - uses: actions/upload-artifact@v4
         if: runner.os == 'Windows'
         with:
