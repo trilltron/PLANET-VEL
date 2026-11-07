@@ -135,10 +135,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Configure (Win32)
         shell: bash
-        run: cmake -S . -B build32 -A Win32 -DPV_BUILD_TESTS=OFF "-DCMAKE_CXX_FLAGS=-MP -EHsc" "-DCMAKE_C_FLAGS=-MP"
+        run: cmake -S . -B build32 -A Win32 -DPV_BUILD_TESTS=ON "-DCMAKE_CXX_FLAGS=-MP -EHsc" "-DCMAKE_C_FLAGS=-MP"
       - name: Build (Win32 VST3 / VST2 dll + standalone)
         shell: bash
         run: cmake --build build32 --config Release --target PlanetVel_VST3 PlanetVel_Standalone --parallel
+      - name: Build test harness (Win32)
+        shell: bash
+        run: cmake --build build32 --config Release --target PlanetVelTests --parallel
       - name: Package
         shell: bash
         run: |
@@ -151,6 +154,19 @@ jobs:
           mkdir -p rel
           7z a "rel/PlanetVel-Windows-32bit-VST2-dll.zip" "./rel32/dll/Planet Vel.dll"
           7z a "rel/PlanetVel-Windows-32bit-App.zip" "./rel32/app/Planet Vel.exe"
+      - name: GATE - load the 32-bit dll like FL does and open its editor (fails the job if it crashes)
+        shell: pwsh
+        run: |
+          $t = Get-ChildItem -Recurse build32 -Filter PlanetVelTests.exe | Select-Object -First 1
+          & $t.FullName vst2dll "$PWD\rel32\dll\Planet Vel.dll"
+          Write-Host "exit code: $LASTEXITCODE"
+          if ($LASTEXITCODE -ne 0) { throw "32-bit dll failed the load/open test" }
+      - name: GATE - the 32-bit standalone must start and stay running
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "$PWD\rel32\app\Planet Vel.exe" -PassThru
+          Start-Sleep -Seconds 10
+          if ($p.HasExited) { throw "32-bit app exited early, code $($p.ExitCode)" } else { Write-Host "32-bit app running, window '$($p.MainWindowTitle)'"; Stop-Process -Id $p.Id -Force }
       - uses: actions/upload-artifact@v4
         with:
           name: PlanetVel-Windows-32bit
