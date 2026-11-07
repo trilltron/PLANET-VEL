@@ -34,6 +34,18 @@ jobs:
           B=build/PlanetVelTests_artefacts/Release/PlanetVelTests
           $B export /tmp/presets && $B render 12 && $B stress
           xvfb-run -a $B vst3 "build/PlanetVel_artefacts/Release/VST3/Planet Vel.vst3"
+      - name: Smoke-test the standalone app (Windows)
+        if: runner.os == 'Windows'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $exe = "$PWD\build\PlanetVel_artefacts\Release\Standalone\Planet Vel.exe"
+          $p = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 12
+          if ($p.HasExited) { Write-Host "APP EXITED EARLY, exit code: $($p.ExitCode) (0x$('{0:X}' -f $p.ExitCode))" } else { Write-Host "APP IS RUNNING after 12 s, main window title: '$($p.MainWindowTitle)'"; Stop-Process -Id $p.Id -Force }
+          $log = "$env:APPDATA\Trill Tron\Planet Vel\planetvel.log"
+          if (Test-Path $log) { Write-Host '---- planetvel.log ----'; Get-Content $log } else { Write-Host 'NO planetvel.log was written (crashed before the processor was created)' }
+          Get-WinEvent -FilterHashtable @{LogName='Application'; ProviderName='Application Error'; StartTime=(Get-Date).AddMinutes(-3)} -ErrorAction SilentlyContinue | ForEach-Object { $_.Message } | Select-Object -First 3
       - name: Package Windows VST2 .dll (same binary also exports VSTPluginMain)
         if: runner.os == 'Windows'
         shell: bash
