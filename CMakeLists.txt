@@ -57,7 +57,7 @@ juce_add_plugin(PlanetVel
   IS_SYNTH                    TRUE
   NEEDS_MIDI_INPUT            TRUE
   NEEDS_MIDI_OUTPUT           FALSE
-  EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+  EDITOR_WANTS_KEYBOARD_FOCUS TRUE
   VST3_CATEGORIES             Instrument Synth
   VST2_CATEGORY               kPlugCategSynth
   AU_MAIN_TYPE                kAudioUnitType_MusicDevice

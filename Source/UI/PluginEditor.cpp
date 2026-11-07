@@ -168,7 +168,7 @@ void PlanetVelEditor::Content::build()
 
     // ---- keyboard + wheels
     keyboard = std::make_unique<PVKeyboard> (ed.proc.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard);
-    keyboard->setAvailableRange (36, 96); keyboard->setOctaveForMiddleC (4); keyboard->setBlackNoteLengthProportion (0.62f); keyboard->setScrollButtonsVisible (false); keyboard->setWantsKeyboardFocus (false);
+    keyboard->setAvailableRange (36, 96); keyboard->setOctaveForMiddleC (4); keyboard->setBlackNoteLengthProportion (0.62f); keyboard->setScrollButtonsVisible (false); keyboard->setWantsKeyboardFocus (true); keyboard->setMouseClickGrabsKeyboardFocus (true); keyboard->setKeyPressBaseOctave (5);   // computer keyboard plays notes: A W S E D F T G Y H U J K ..., Z / X = octave down / up
     keyboard->setBounds (R (212, 1030, 1698, 152)); keyboard->setKeyWidth (keyboard->getWidth() / 36.0f); keyboard->setMidiChannel (1);
     keyboard->setColour (juce::MidiKeyboardComponent::textLabelColourId, Colour (0xff6a5870)); keyboard->setColour (juce::MidiKeyboardComponent::keySeparatorLineColourId, Colour (0xff6a5870));
     addAndMakeVisible (*keyboard);
@@ -242,8 +242,12 @@ PlanetVelEditor::PlanetVelEditor (PlanetVelProcessor& p) : juce::AudioProcessorE
     setSize (w, h);
 
     proc.addChangeListener (this);
+    addMouseListener (this, true);                                         // any click in the UI hands the typing keys back to the piano
+    content->lcd.onSearchDone = [this] { content->keyboard->grabKeyboardFocus(); };
     selectLayer (0); setPage (0); content->global.sync();
     startTimerHz (30);
+    if (juce::JUCEApplicationBase::isStandaloneApp())                        // standalone: the piano starts focused so typing plays immediately
+        juce::MessageManager::callAsync ([safe = juce::Component::SafePointer<PlanetVelEditor> (this)] { if (safe != nullptr) safe->content->keyboard->grabKeyboardFocus(); });
     pvLog ("editor ctor: done");
 }
 PlanetVelEditor::~PlanetVelEditor()
@@ -252,6 +256,11 @@ PlanetVelEditor::~PlanetVelEditor()
     proc.editorWidth = getWidth(); proc.editorHeight = getHeight(); proc.saveGlobalSettings();
     setLookAndFeel (nullptr);
 }
+void PlanetVelEditor::mouseDown (const juce::MouseEvent& e)
+{
+    if (dynamic_cast<juce::TextEditor*> (e.eventComponent) == nullptr) content->keyboard->grabKeyboardFocus();
+}
+
 void PlanetVelEditor::parentHierarchyChanged()
 {
     // JUCE 8 on Windows defaults to Direct2D, which can crash or show nothing on some GPUs/drivers/hosts: use the software renderer.

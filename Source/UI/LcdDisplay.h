@@ -16,7 +16,8 @@ public:
     void mouseDoubleClick (const juce::MouseEvent&) override;
     void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
     void tick (bool animate);                                   // ~30 fps
-    std::function<void (int)> onSubTab;                         // asks the editor to switch top level page
+    std::function<void (int)> onSubTab;
+    std::function<void()> onSearchDone;                         // search box finished (Enter / Esc): give the typing keys back to the piano                         // asks the editor to switch top level page
 
     void step (int delta);
     void explore();

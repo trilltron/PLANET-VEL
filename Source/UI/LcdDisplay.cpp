@@ -12,6 +12,13 @@ LcdDisplay::LcdDisplay (PlanetVelProcessor& p) : proc (p)
     searchBox.setTextToShowWhenEmpty ("search name / tag...", theme().lcdText.withAlpha (0.4f)); searchBox.setFont (monoFont (11.5f)); searchBox.setMultiLine (false); searchBox.addListener (this);
     searchBox.setColour (juce::TextEditor::backgroundColourId, juce::Colours::transparentBlack); searchBox.setColour (juce::TextEditor::outlineColourId, juce::Colours::transparentBlack);
     searchBox.setIndents (4, 2); searchBox.setBorder ({ 0, 2, 0, 2 });
+    // The search box must NOT steal the typing keys from the on-screen piano: it only takes keyboard focus when clicked,
+    // and gives it up again on Enter / Esc / focus loss.
+    searchBox.setWantsKeyboardFocus (false);
+    searchBox.addMouseListener (this, false);
+    searchBox.onFocusLost = [this] { searchBox.setWantsKeyboardFocus (false); };
+    searchBox.onReturnKey = [this] { searchBox.giveAwayKeyboardFocus(); if (onSearchDone) onSearchDone(); };
+    searchBox.onEscapeKey = [this] { searchBox.clear(); searchBox.giveAwayKeyboardFocus(); if (onSearchDone) onSearchDone(); };
     proc.addChangeListener (this);
     rebuildFilter();
 }
@@ -209,6 +216,7 @@ void LcdDisplay::explore() { if (! visible.empty()) { const int i = juce::Random
 
 void LcdDisplay::mouseDown (const juce::MouseEvent& e)
 {
+    if (e.eventComponent == &searchBox) { searchBox.setWantsKeyboardFocus (true); searchBox.grabKeyboardFocus(); return; }
     const auto p = e.getPosition();
     if (btnPrev.contains (p)) { step (-1); return; } if (btnNext.contains (p)) { step (1); return; } if (btnExplore.contains (p)) { explore(); return; }
     if (btnAB.contains (p)) { proc.toggleAB(); return; }

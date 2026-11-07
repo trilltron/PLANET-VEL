@@ -49,6 +49,7 @@ public:
     ~PlanetVelEditor() override;
     void resized() override;
     void parentHierarchyChanged() override;
+    void mouseDown (const juce::MouseEvent&) override;
     void paint (juce::Graphics&) override;
     bool isInterestedInFileDrag (const juce::StringArray&) override;
     void filesDropped (const juce::StringArray&, int, int) override;
