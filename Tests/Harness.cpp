@@ -4,6 +4,7 @@
 //   PlanetVelTests stress                  sample-rate / block-size / quality / polyphony / random-automation torture test
 #include "PluginProcessor.h"
 #include "UI/PluginEditor.h"
+#include "Vst2.h"
 #include <set>
 
 using namespace PV;
@@ -212,6 +213,33 @@ static int cmdVst3 (const juce::File& bundle)
     return failures;
 }
 
+// Drives the native VST2 entry point (VSTPluginMain) the way a VST2 host (FL Studio 20.0-20.6) does.
+static pvvst2::intptr fakeHost (pvvst2::AEffect*, int32_t op, int32_t, pvvst2::intptr, void*, float) { return op == 1 ? 2400 : 0; }
+static int cmdVst2()
+{
+    using namespace pvvst2;
+    auto* fx = VSTPluginMain (&fakeHost);
+    CHECK (fx != nullptr && fx->magic == 0x56737450, "VSTPluginMain returns an AEffect with 'VstP' magic");
+    if (fx == nullptr) return 1;
+    CHECK (fx->numParams == PV::NUM_PARAMS && fx->numPrograms == (int) PresetBank::factory().size(), "params/programs exposed");
+    CHECK ((fx->flags & 256) != 0 && fx->numOutputs == 2 && fx->uniqueID == 0x5076656c, "synth flag, stereo out, unique id 'Pvel'");
+    char name[64] = {}; fx->dispatcher (fx, 45, 0, 0, name, 0); CHECK (juce::String (name) == "Planet Vel", "effect name");
+    char pn[64] = {}; fx->dispatcher (fx, 8, 0, 0, pn, 0); CHECK (juce::String (pn) == "Master", "param 0 name");
+    fx->dispatcher (fx, 10, 0, 0, nullptr, 48000.0f); fx->dispatcher (fx, 11, 0, 512, nullptr, 0); fx->dispatcher (fx, 12, 0, 1, nullptr, 0);   // rate, block, resume
+    fx->dispatcher (fx, 2, 0, 5, nullptr, 0);                                                                                                  // program 5
+    VstMidiEvent me {}; me.type = 1; me.byteSize = sizeof (me); me.deltaFrames = 0; me.midiData[0] = (char) 0x90; me.midiData[1] = 60; me.midiData[2] = 100;
+    VstEvents evs {}; evs.numEvents = 1; evs.events[0] = reinterpret_cast<VstEvent*> (&me);
+    fx->dispatcher (fx, 25, 0, 0, &evs, 0);
+    std::vector<float> l (512), r (512); float* out[2] = { l.data(), r.data() }; float peak = 0; Library::get().waitUntilReady();
+    for (int b = 0; b < 60; ++b) { fx->processReplacing (fx, nullptr, out, 512); for (int i = 0; i < 512; ++i) peak = juce::jmax (peak, std::abs (l[(size_t) i]), std::abs (r[(size_t) i])); }
+    std::printf ("VST2 entry point: %d params, %d programs, peak %.3f\n", fx->numParams, fx->numPrograms, peak); CHECK (peak > 0.001f, "audio through the VST2 entry point");
+    void* chunk = nullptr; const auto sz = fx->dispatcher (fx, 23, 0, 0, &chunk, 0); CHECK (sz > 100 && chunk != nullptr, "VST2 chunk (state) saved");
+    if (chunk) { juce::MemoryBlock keep (chunk, (size_t) sz); fx->dispatcher (fx, 24, 0, (pvvst2::intptr) sz, keep.getData(), 0); }
+    fx->setParameter (fx, G_MASTER, 0.5f); CHECK (std::abs (fx->getParameter (fx, G_MASTER) - 0.5f) < 1e-3f, "parameter round trip");
+    fx->dispatcher (fx, 1, 0, 0, nullptr, 0);                                                                                                  // effClose
+    return failures;
+}
+
 static int cmdStress()
 {
     Library::get().waitUntilReady();
@@ -288,6 +316,7 @@ int main (int argc, char** argv)
     if (cmd == "export") rc = cmdExport (juce::File (argc > 2 ? argv[2] : "Presets"));
     else if (cmd == "render") rc = cmdRender (argc > 2 ? juce::jmax (1, std::atoi (argv[2])) : 10, argc > 3 ? juce::File (argv[3]) : juce::File());
     else if (cmd == "stress") rc = cmdStress();
+    else if (cmd == "vst2") rc = cmdVst2();
     else if (cmd == "libtime") { const auto t0 = juce::Time::getMillisecondCounterHiRes(); Library::get().waitUntilReady(); std::printf ("library (wavetables + granular sources) ready after %.0f ms\n", juce::Time::getMillisecondCounterHiRes() - t0); }
     else if (cmd == "vst3") rc = cmdVst3 (juce::File (argc > 2 ? argv[2] : "Planet Vel.vst3"));
     else if (cmd == "snapshot") rc = cmdSnapshot (juce::File (argc > 2 ? argv[2] : "ui.png"), argc > 3 ? std::atoi (argv[3]) : 0, argc > 4 ? std::atoi (argv[4]) : 0, argc > 5 ? std::atoi (argv[5]) : 100);

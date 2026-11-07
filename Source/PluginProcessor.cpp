@@ -417,3 +417,5 @@ juce::AudioProcessorEditor* PlanetVelProcessor::createEditor() { return new Plan
 } // namespace PV
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new PV::PlanetVelProcessor(); }
+
+#include "Vst2Wrapper.inl"
